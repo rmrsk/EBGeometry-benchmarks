@@ -1,0 +1,32 @@
+# Benchmark: EBGeometry TriMeshSDF vs fcpw vs TriangleMeshDistance (closest-point on a triangle mesh).
+# Requires the mesh, fcpw (Enoki is vendored inside fcpw; Eigen is a nested submodule), and
+# TriangleMeshDistance submodules:
+#   git submodule update --init ../Submodules/fcpw ../Submodules/common-3d-test-models ../Submodules/TriangleMeshDistance
+#   git -C ../Submodules/fcpw submodule update --init deps/eigen   # Eigen only (skip GPU slang-rhi)
+# fcpw is built with its Enoki CPU vectorization: FCPW_SIMD_WIDTH matches the ISA (4=SSE, 8=AVX2,
+# 16=AVX-512); adjust it below to your machine. EBGEOMETRY_HOME defaults to the EBGeometry submodule.
+
+EBGEOMETRY_HOME ?= ../Submodules/EBGeometry
+CXX             ?= g++
+CXXFLAGS        ?= -std=c++17 -O3 -march=native
+FCPW_SIMD_WIDTH ?= 8
+
+INCLUDES := -I$(EBGEOMETRY_HOME) \
+            -I../Submodules/fcpw/include \
+            -I../Submodules/fcpw/deps/eigen \
+            -I../Submodules/fcpw/deps/enoki/include \
+            -I../Submodules/TriangleMeshDistance/TriangleMeshDistance/include
+
+DEFINES := -DFCPW_USE_ENOKI -DFCPW_SIMD_WIDTH=$(FCPW_SIMD_WIDTH)
+
+TARGET := MeshSDF.ex
+
+$(TARGET): main.cpp
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) $< -o $@
+
+.PHONY: run clean
+run: $(TARGET)
+	./$(TARGET)
+
+clean:
+	$(RM) $(TARGET)

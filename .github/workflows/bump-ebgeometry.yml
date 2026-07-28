@@ -1,0 +1,49 @@
+name: Bump EBGeometry
+
+# Keeps Submodules/EBGeometry tracking the latest commit on EBGeometry's main branch, so a fresh
+# clone of this repo is never more than one polling interval stale. EBGeometry has no tagged
+# releases yet; once it starts cutting them, switch the `git ls-remote` below from
+# `refs/heads/main` to the latest tag (e.g. via the GitHub releases API) to track releases instead
+# of every main-branch commit.
+#
+# This only polls on a schedule -- it cannot react the instant EBGeometry's main branch moves.
+# Instant triggering needs a cross-repo `repository_dispatch`: a step at the end of EBGeometry's
+# own CI (on push to main) that calls the GitHub API to fire an event here, authenticated with a
+# fine-grained PAT stored as a secret in the EBGeometry repo. That's a deliberate future upgrade,
+# not set up here, since it requires minting a PAT and touching EBGeometry's own CI.yml.
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check for a newer EBGeometry main commit
+        id: check
+        run: |
+          CURRENT=$(git ls-tree HEAD Submodules/EBGeometry | awk '{print $3}')
+          LATEST=$(git ls-remote https://github.com/rmrsk/EBGeometry.git refs/heads/main | awk '{print $1}')
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          if [ "$CURRENT" != "$LATEST" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump submodule pointer
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git update-index --cacheinfo 160000,${{ steps.check.outputs.latest }},Submodules/EBGeometry
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "Bump EBGeometry submodule to ${{ steps.check.outputs.latest }}"
+          git push

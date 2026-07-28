@@ -1,0 +1,21 @@
+[submodule "Submodules/EBGeometry"]
+	path = Submodules/EBGeometry
+	url = https://github.com/rmrsk/EBGeometry.git
+[submodule "Submodules/common-3d-test-models"]
+	path = Submodules/common-3d-test-models
+	url = https://github.com/alecjacobson/common-3d-test-models
+[submodule "Submodules/nanoflann"]
+	path = Submodules/nanoflann
+	url = https://github.com/jlblancoc/nanoflann.git
+[submodule "Submodules/picoflann"]
+	path = Submodules/picoflann
+	url = https://github.com/rmsalinas/picoflann.git
+[submodule "Submodules/kd3"]
+	path = Submodules/kd3
+	url = https://github.com/KaruroChori/kd3
+[submodule "Submodules/TriangleMeshDistance"]
+	path = Submodules/TriangleMeshDistance
+	url = https://github.com/InteractiveComputerGraphics/TriangleMeshDistance
+[submodule "Submodules/fcpw"]
+	path = Submodules/fcpw
+	url = https://github.com/rohan-sawhney/fcpw.git
