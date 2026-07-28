@@ -1,0 +1,52 @@
+name: Build and run
+
+# Shared by CI.yml (validates the currently pinned Submodules/EBGeometry commit on every push/PR)
+# and bump-ebgeometry.yml (validates a *candidate* EBGeometry commit before it is ever pinned).
+# Keeping this in one place means both call sites exercise identical build+run logic.
+
+on:
+  workflow_call:
+    inputs:
+      ebgeometry-ref:
+        description: "Commit to check out for Submodules/EBGeometry, overriding the pinned submodule commit. Empty = use the pinned commit as-is."
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  benchmark:
+    name: ${{ matrix.directory }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - directory: NearestNeighbor
+            submodules: Submodules/EBGeometry Submodules/picoflann Submodules/nanoflann Submodules/kd3
+          - directory: MeshSDF
+            submodules: Submodules/EBGeometry Submodules/fcpw Submodules/common-3d-test-models Submodules/TriangleMeshDistance
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Fetch submodules
+        run: |
+          git submodule update --init --depth 1 ${{ matrix.submodules }}
+          if [ "${{ matrix.directory }}" = "MeshSDF" ]; then
+            # fcpw's Eigen (nested submodule); Enoki is vendored inside fcpw, GPU slang-rhi is skipped.
+            git -C Submodules/fcpw submodule update --init --depth 1 deps/eigen
+          fi
+
+      - name: Override EBGeometry ref
+        if: inputs.ebgeometry-ref != ''
+        run: |
+          git -C Submodules/EBGeometry fetch --depth 1 origin ${{ inputs.ebgeometry-ref }}
+          git -C Submodules/EBGeometry checkout FETCH_HEAD
+
+      - name: Build
+        working-directory: ${{ matrix.directory }}
+        run: make
+
+      - name: Run
+        working-directory: ${{ matrix.directory }}
+        run: ./${{ matrix.directory }}.ex

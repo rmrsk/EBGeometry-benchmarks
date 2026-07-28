@@ -48,11 +48,13 @@ Keeping EBGeometry up to date
 
 Unlike the comparison libraries, `Submodules/EBGeometry` is not pinned by hand: a scheduled
 workflow (`.github/workflows/bump-ebgeometry.yml`) periodically checks EBGeometry's `main` branch
-and, if it has moved, commits the new submodule pointer and pushes. That push triggers the normal
-CI workflow, which rebuilds and reruns every benchmark against the new EBGeometry commit — so a
-fresh clone is never more than one polling interval behind EBGeometry's `main`. See that workflow
-file for the exact schedule and for how to move to tracking tagged releases instead, once
-EBGeometry starts cutting them.
+and, if it has moved, builds and runs both benchmarks against that candidate commit first. Only if
+that succeeds does it commit the new submodule pointer and push — a broken EBGeometry commit is
+never pinned, it just fails the workflow run (visible in the Actions tab). So a fresh clone is
+never more than one polling interval behind EBGeometry's `main`, and `main` here never ends up
+pinned to an EBGeometry commit that doesn't build or crashes. See that workflow file for the exact
+schedule and for how to move to tracking tagged releases instead, once EBGeometry starts cutting
+them.
 
 CI
 --

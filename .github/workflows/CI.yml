@@ -9,35 +9,7 @@ on:
 
 jobs:
   Benchmark:
-    name: ${{ matrix.directory }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - directory: NearestNeighbor
-            submodules: Submodules/EBGeometry Submodules/picoflann Submodules/nanoflann Submodules/kd3
-          - directory: MeshSDF
-            submodules: Submodules/EBGeometry Submodules/fcpw Submodules/common-3d-test-models Submodules/TriangleMeshDistance
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Fetch submodules
-        run: |
-          git submodule update --init --depth 1 ${{ matrix.submodules }}
-          if [ "${{ matrix.directory }}" = "MeshSDF" ]; then
-            # fcpw's Eigen (nested submodule); Enoki is vendored inside fcpw, GPU slang-rhi is skipped.
-            git -C Submodules/fcpw submodule update --init --depth 1 deps/eigen
-          fi
-
-      - name: Build
-        working-directory: ${{ matrix.directory }}
-        run: make
-
-      - name: Run
-        working-directory: ${{ matrix.directory }}
-        run: ./${{ matrix.directory }}.ex
+    uses: ./.github/workflows/build-and-run.yml
 
   CI-passed:
     needs: [Benchmark]

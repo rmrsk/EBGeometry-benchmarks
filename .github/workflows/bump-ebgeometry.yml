@@ -6,11 +6,17 @@ name: Bump EBGeometry
 # `refs/heads/main` to the latest tag (e.g. via the GitHub releases API) to track releases instead
 # of every main-branch commit.
 #
+# Validate-then-commit: the candidate EBGeometry commit is built and run (via build-and-run.yml,
+# the same job CI.yml uses) BEFORE it is ever pinned. The `commit` job below only runs if that
+# validation job succeeds, so a broken EBGeometry commit never reaches main -- it just makes this
+# workflow run fail, which shows up in the Actions tab (and via GitHub's own failed-workflow
+# notifications, if enabled under your GitHub notification settings).
+#
 # This only polls on a schedule -- it cannot react the instant EBGeometry's main branch moves.
 # Instant triggering needs a cross-repo `repository_dispatch`: a step at the end of EBGeometry's
 # own CI (on push to main) that calls the GitHub API to fire an event here, authenticated with a
-# fine-grained PAT stored as a secret in the EBGeometry repo. That's a deliberate future upgrade,
-# not set up here, since it requires minting a PAT and touching EBGeometry's own CI.yml.
+# fine-grained PAT stored as a secret in the EBGeometry repo. Deliberately not set up: it requires
+# minting a PAT and touching EBGeometry's own CI.yml.
 
 on:
   schedule:
@@ -21,8 +27,11 @@ permissions:
   contents: write
 
 jobs:
-  bump:
+  check:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+      latest: ${{ steps.check.outputs.latest }}
     steps:
       - uses: actions/checkout@v7
 
@@ -39,11 +48,23 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+  validate:
+    needs: [check]
+    if: needs.check.outputs.changed == 'true'
+    uses: ./.github/workflows/build-and-run.yml
+    with:
+      ebgeometry-ref: ${{ needs.check.outputs.latest }}
+
+  commit:
+    needs: [check, validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
       - name: Bump submodule pointer
-        if: steps.check.outputs.changed == 'true'
         run: |
-          git update-index --cacheinfo 160000,${{ steps.check.outputs.latest }},Submodules/EBGeometry
+          git update-index --cacheinfo 160000,${{ needs.check.outputs.latest }},Submodules/EBGeometry
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "Bump EBGeometry submodule to ${{ steps.check.outputs.latest }}"
+          git commit -m "Bump EBGeometry submodule to ${{ needs.check.outputs.latest }}"
           git push
