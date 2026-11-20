@@ -19,3 +19,6 @@
 [submodule "Submodules/fcpw"]
 	path = Submodules/fcpw
 	url = https://github.com/rohan-sawhney/fcpw.git
+[submodule "Submodules/tinybvh"]
+	path = Submodules/tinybvh
+	url = https://github.com/jbikker/tinybvh.git
