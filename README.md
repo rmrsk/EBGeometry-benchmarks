@@ -22,6 +22,9 @@ part that transfers across machines even when the timings do not.
 * [`MeshSDF/`](MeshSDF/README.md) — closest-point on a triangle mesh: EBGeometry's `TriMeshSDF` vs
   [fcpw](https://github.com/rohan-sawhney/fcpw) and
   [TriangleMeshDistance](https://github.com/InteractiveComputerGraphics/TriangleMeshDistance).
+* [`RayTracing/`](RayTracing/README.md) — closest-hit rays on a triangle mesh: EBGeometry's
+  `TriMeshSDF` (`firstHit()`) vs [tinybvh](https://github.com/jbikker/tinybvh)'s binary and wide CPU
+  BVHs, coherent and incoherent rays, on one thread and all threads.
 
 Cloning
 -------
@@ -48,7 +51,7 @@ Keeping EBGeometry up to date
 
 Unlike the comparison libraries, `Submodules/EBGeometry` is not pinned by hand: a scheduled
 workflow (`.github/workflows/bump-ebgeometry.yml`) periodically checks EBGeometry's `main` branch
-and, if it has moved, builds and runs both benchmarks against that candidate commit first. Only if
+and, if it has moved, builds and runs every benchmark against that candidate commit first. Only if
 that succeeds does it commit the new submodule pointer and push — a broken EBGeometry commit is
 never pinned, it just fails the workflow run (visible in the Actions tab). So a fresh clone is
 never more than one polling interval behind EBGeometry's `main`, and `main` here never ends up
